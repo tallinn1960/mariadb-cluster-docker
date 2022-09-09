@@ -7,46 +7,51 @@ x-env-files:      &env-files
 services:
   mariadb-server-1:
     image:        mariadbclusterdocker:10.6
+    build:
+      dockerfile: Dockerfile
     <<:           *env-files
     networks:
       - db-network
-    restart:      always
-    command:      mysqld --wsrep-new-cluster  --wsrep-cluster-address=gcomm://mariadb-server-1,gcomm://mariadb-server-2,gcomm://mariadb-server-3 
+    restart:      unless-stopped
+    command:      mysqld --wsrep-node-name=mariadb-server-1
     ports:
       - 3306:3306
-    container_name: mariadb-server-1
+    configs:
+      - myconf
     volumes:
       - mariadb-server-1:/var/lib/mysql
 
   mariadb-server-2:
     image:        mariadbclusterdocker:10.6
+    build:
+      dockerfile: Dockerfile
     <<:           *env-files
     networks:
       - db-network
-    restart:      always
-    command:      mysqld   --wsrep-cluster-address=gcomm://mariadb-server-1,gcomm://mariadb-server-2,gcomm://mariadb-server-3
+    restart:      unless-stopped
+    command:      mysqld --wsrep-node-name=mariadb-server-2
     ports:
       - 3307:3306
-    container_name: mariadb-server-2
+    configs:
+      - myconf
     volumes:
-      - mariadb-server-2:/var/lib/mysql 
-    depends_on:
-      - mariadb-server-1
+      - mariadb-server-2:/var/lib/mysql
 
   mariadb-server-3:
     image:        mariadbclusterdocker:10.6
+    build:
+      dockerfile: Dockerfile
     <<:           *env-files
     networks:
       - db-network
-    restart:      always
-    command:      mysqld  --wsrep-cluster-address=gcomm://mariadb-server-1,gcomm://mariadb-server-2,gcomm://mariadb-server-3
+    restart:      unless-stopped
+    command:      mysqld --wsrep-node-name=mariadb-server-3
     ports:
       - 3308:3306
-    container_name: mariadb-server-3
+    configs:
+      - myconf
     volumes:
       - mariadb-server-3:/var/lib/mysql 
-    depends_on:
-      - mariadb-server-1
 
   phpmyadmin:
     image:        phpmyadmin/phpmyadmin
@@ -59,8 +64,12 @@ services:
       - db-network
     ports:
       - 50080:80
-    restart:      always
+    restart:      unless-stopped
     container_name: phpmyadmin-mariadb
+
+configs:
+  myconf:
+    file: my.cnf
 
 networks:
   db-network:

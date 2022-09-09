@@ -1,0 +1,3 @@
+services:
+  mariadb-server-1:
+    command:      mysqld --wsrep-new-cluster --wsrep-node-name=mariadb-server-1 --wsrep-cluster-address=gcomm://mariadb-server-1,mariadb-server-2,mariadb-server-3
