@@ -6,26 +6,45 @@ x-env-files:      &env-files
 
 services:
   mariadb-server-1:
-    image:        mariadbclusterdocker:latest
+    image:        mariadbclusterdocker:10.6
     <<:           *env-files
     networks:
       - db-network
     restart:      always
-    command:      mysqld --wsrep-new-cluster --wsrep-provider=/usr/lib/libgalera_smm.so --wsrep-recover
+    command:      mysqld --wsrep-new-cluster  --wsrep-cluster-address=gcomm://mariadb-server-1,gcomm://mariadb-server-2,gcomm://mariadb-server-3 
     ports:
       - 3306:3306
     container_name: mariadb-server-1
+    volumes:
+      - mariadb-server-1:/var/lib/mysql
 
   mariadb-server-2:
-    image:        mariadbclusterdocker:latest
+    image:        mariadbclusterdocker:10.6
     <<:           *env-files
     networks:
       - db-network
     restart:      always
-    command:      mysqld --wsrep-cluster-address=gcomm://mariadb-server-1,gcomm://mariadb-server-2 --wsrep-provider=/usr/lib/libgalera_smm.so --wsrep-recover
+    command:      mysqld   --wsrep-cluster-address=gcomm://mariadb-server-1,gcomm://mariadb-server-2,gcomm://mariadb-server-3
     ports:
       - 3307:3306
     container_name: mariadb-server-2
+    volumes:
+      - mariadb-server-2:/var/lib/mysql 
+    depends_on:
+      - mariadb-server-1
+
+  mariadb-server-3:
+    image:        mariadbclusterdocker:10.6
+    <<:           *env-files
+    networks:
+      - db-network
+    restart:      always
+    command:      mysqld  --wsrep-cluster-address=gcomm://mariadb-server-1,gcomm://mariadb-server-2,gcomm://mariadb-server-3
+    ports:
+      - 3308:3306
+    container_name: mariadb-server-3
+    volumes:
+      - mariadb-server-3:/var/lib/mysql 
     depends_on:
       - mariadb-server-1
 
@@ -45,3 +64,8 @@ services:
 
 networks:
   db-network:
+
+volumes:
+  mariadb-server-1:
+  mariadb-server-2:
+  mariadb-server-3:

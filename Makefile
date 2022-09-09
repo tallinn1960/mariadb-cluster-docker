@@ -1,2 +1,2 @@
 mariadbclusterdocker:
-	docker build -t mariadbclusterdocker:latest .
+	docker build -t mariadbclusterdocker:10.6 .

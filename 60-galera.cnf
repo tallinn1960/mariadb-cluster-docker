@@ -4,11 +4,14 @@
 # See the examples of server wsrep.cnf files in /usr/share/mysql
 # and read more at https://mariadb.com/kb/en/galera-cluster/
 
+[mysqld]
+wsrep-provider           = /usr/lib/libgalera_smm.so
+
 [galera]
 # Mandatory settings
 wsrep_on                 = ON
 wsrep_cluster_name       = "MariaDB Galera Cluster"
-wsrep_cluster_address    = gcomm://
+#wsrep-cluster-address    = gcomm://mariadb-server-1,gcomm://mariadb-server-2,gcomm://mariadb-server-3 
 binlog_format            = row
 default_storage_engine   = InnoDB
 innodb_autoinc_lock_mode = 2
