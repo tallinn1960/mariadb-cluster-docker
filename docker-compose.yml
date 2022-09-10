@@ -54,7 +54,7 @@ services:
       - mariadb-server-3:/var/lib/mysql 
 
   phpmyadmin:
-    image:        phpmyadmin/phpmyadmin
+    image:        phpmyadmin
     environment:
       - PMA_HOST=mariadb-server-1
       - PMA_USER=root
