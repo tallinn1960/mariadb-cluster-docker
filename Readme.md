@@ -41,11 +41,14 @@ As a galera cluster decides quorum-based for the most advanced data node to sync
 with, stopping two nodes and restarting them requires care: restart one node and
 wait for this node to catch up with the unstopped node, then start the other node. This will 
 ensure that each returning node is in sync with the unstopped node.
-### Stopping and restarting all nodes
-In short: avoid doing this as recovery from that is work. With all nodes gone the cluster's life has come to
+### Stopping and restarting all nodes/Crash recovery
+In short: avoid doing this as recovery from that is work. So refrain from doing **_docker compose
+stop_** or **_docker compose down_** unless you really need to.
+
+With all nodes gone the cluster's life has come to
 an end, and you need to create a new one. However, for not loosing any data you first have
 to identify which was the last node turned off. If that node is unknown or just uncertain (which is the case when
-the whole cluster has been stopped by _docker compose stop_), determine that last node off by running:
+the whole cluster has been stopped by **_docker compose stop_**), determine that last node off by running:
 ```
 docker compose -f docker-compose.yml -f recovery.yaml up | grep "Recovered position"
 ```
@@ -57,9 +60,17 @@ mariadb-server-3: [Note] WSREP: Recovered position: ...:1124
 ```
 not necessarily with the nodes reporting in that order. Note the numbers at the end of 
 the lines, those are sequence numbers. The node with the highest sequence number needs to
-be started as the bootstrap node for a new cluster. In the example given this is 
-_mariadb-server-2_, so let's do what we did to bootstrap the cluster, but this time with
-_mariadb-server-2_ as the bootstrap node:
+be started as the bootstrap node for a new cluster. If more than one node reports the 
+most advanced sequence number, choose any such node for bootstrapping.
+
+In the example given this is 
+_mariadb-server-2_. We need to make sure that this node is able to bootstrap 
+by running
+```
+docker compose run <bootstrapnodename> sed -i -e's/safe_to_bootstrap: 0/safe_to_bootstrap: 1/' /var/lib/mysql/grastate.dat
+```
+as there are occasions where no node is able to bootstrap a new cluster by default. 
+Then bootstrap the new cluster from that node:
 ```
 docker compose -f docker-compose.yml -f bootstrap2.yaml up -d
 ```
@@ -68,16 +79,6 @@ Again, once all nodes are up and running, restart the bootstrap node in normal m
 docker compose up -d
 ```
 I warned you.
-### Crash recovery
-This is almost similar to stopping and restarting all nodes, but with nodes shutdown 
-non gracefully you need to check and modify state data in the identified bootstrap 
-node with the most advanced recovered position. Before bootstrapping the cluster with 
-that node, you need to enable it to boostrap by running, 
-```
-docker compose run <bootstrapnodename> sed -i -e's/safe_to_bootstrap: 0/safe_to_bootstrap: 1/' /var/lib/mysql/grastate.dat
-```
-with the service name of the bootstrap node used in place of `<bootstrapname>`.
-Then bootstrap the cluster and switch all nodes to normal mode after that.
 ## Adding nodes
 You can add nodes to the cluster utilizing any service definition of a database cluster node from _docker-compose.yml_
 as a template. Requirements are:
